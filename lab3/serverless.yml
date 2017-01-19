@@ -1,0 +1,51 @@
+service: serverlesss-hello-world
+
+provider:
+  name: aws
+  runtime: nodejs4.3
+  iamRoleStatements:
+    -  Effect: "Allow"
+       Action:
+         - "dynamodb:PutItem"
+         - "dynamodb:GetItem"
+         - "dynamodb:UpdateItem"
+       Resource: "*"
+
+stage: dev
+region: us-east-1
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http:
+          path: hello
+          method: get
+  counter:
+    handler: handler.counter
+    events:
+      - http:
+          path: counter
+          method: get
+  reliablecounter:
+    handler: handler.reliablecounter
+    events:
+      - http:
+          path: reliablecounter
+          method: get
+
+resources:
+  Resources:
+    CounterTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: counter
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

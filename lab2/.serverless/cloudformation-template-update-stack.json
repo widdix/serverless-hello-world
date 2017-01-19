@@ -1,0 +1,400 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "serverlesss-hello-world",
+              "dev",
+              "us-east-1",
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "IamPolicyLambdaExecution": {
+      "Type": "AWS::IAM::Policy",
+      "DependsOn": [
+        "IamRoleLambdaExecution"
+      ],
+      "Properties": {
+        "PolicyName": {
+          "Fn::Join": [
+            "-",
+            [
+              "dev",
+              "serverlesss-hello-world",
+              "lambda"
+            ]
+          ]
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream"
+              ],
+              "Resource": "arn:aws:logs:us-east-1:*:*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "logs:PutLogEvents"
+              ],
+              "Resource": "arn:aws:logs:us-east-1:*:*"
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "IamRoleLambdaExecution"
+          }
+        ]
+      }
+    },
+    "HelloLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/serverlesss-hello-world/dev/1484811188222-2017-01-19T07:33:08.222Z/serverlesss-hello-world.zip"
+        },
+        "FunctionName": "serverlesss-hello-world-dev-hello",
+        "Handler": "handler.hello",
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs4.3",
+        "Timeout": 6
+      },
+      "DependsOn": [
+        "IamPolicyLambdaExecution",
+        "IamRoleLambdaExecution"
+      ]
+    },
+    "HelloLambdaVersionuiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "HelloLambdaFunction"
+        },
+        "CodeSha256": "uiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc="
+      }
+    },
+    "CounterLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/serverlesss-hello-world/dev/1484811188222-2017-01-19T07:33:08.222Z/serverlesss-hello-world.zip"
+        },
+        "FunctionName": "serverlesss-hello-world-dev-counter",
+        "Handler": "handler.counter",
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "nodejs4.3",
+        "Timeout": 6
+      },
+      "DependsOn": [
+        "IamPolicyLambdaExecution",
+        "IamRoleLambdaExecution"
+      ]
+    },
+    "CounterLambdaVersionuiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "CounterLambdaFunction"
+        },
+        "CodeSha256": "uiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc="
+      }
+    },
+    "ApiGatewayRestApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "dev-serverlesss-hello-world"
+      }
+    },
+    "ApiGatewayResourceHello": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "hello",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceCounter": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "counter",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodHelloGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceHello"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "HelloLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      }
+    },
+    "ApiGatewayMethodCounterGet": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "GET",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceCounter"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "CounterLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      }
+    },
+    "ApiGatewayDeployment1484811188246": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "StageName": "dev"
+      },
+      "DependsOn": [
+        "ApiGatewayMethodHelloGet",
+        "ApiGatewayMethodCounterGet"
+      ]
+    },
+    "HelloLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "HelloLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "CounterLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "CounterLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:aws:execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    },
+    "HelloLambdaFunctionArn": {
+      "Description": "Lambda function info",
+      "Value": {
+        "Fn::GetAtt": [
+          "HelloLambdaFunction",
+          "Arn"
+        ]
+      }
+    },
+    "HelloLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "HelloLambdaVersionuiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc"
+      }
+    },
+    "CounterLambdaFunctionArn": {
+      "Description": "Lambda function info",
+      "Value": {
+        "Fn::GetAtt": [
+          "CounterLambdaFunction",
+          "Arn"
+        ]
+      }
+    },
+    "CounterLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "CounterLambdaVersionuiBQ9hUXAd5G6LDoAjymutS4EDxW8nqSytJP6HQexSc"
+      }
+    },
+    "ServiceEndpoint": {
+      "Description": "URL of the service endpoint",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ApiGatewayRestApi"
+            },
+            ".execute-api.us-east-1.amazonaws.com/dev"
+          ]
+        ]
+      }
+    }
+  }
+}
